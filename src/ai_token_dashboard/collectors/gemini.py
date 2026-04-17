@@ -75,6 +75,7 @@ class GeminiCollector(JsonlTailCollector):
             cache_read_tokens=cache_r,
             cost_usd=cost_for(model, input_t, output_t, cache_read_tokens=cache_r),
             session_id=obj.get("sessionId") or obj.get("session_id"),
+            project=path.parent.name,
             timestamp=_ts_of(obj),
             event_id=f"gemini:{event_id}",
         )

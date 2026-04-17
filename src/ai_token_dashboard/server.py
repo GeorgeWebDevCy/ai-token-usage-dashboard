@@ -1,23 +1,4 @@
-"""FastAPI HTTP + WebSocket server.
-
-Endpoints:
-  GET  /api/stats/today      — today's aggregate totals
-  GET  /api/stats/range      — totals for an arbitrary window (?hours= or ?days=)
-  GET  /api/stats/by_source  — per-source breakdown
-  GET  /api/stats/by_model   — per-model breakdown
-  GET  /api/stats/series     — bucketed time series for the chart
-  GET  /api/events/recent    — most recent N raw events
-  GET  /api/suggestions      — advisor tips with converted savings
-  GET  /api/fx               — current exchange rate info
-  WS   /ws                   — live TokenEvent stream
-
-Every response that includes a ``cost_usd`` field is enriched in-place with a
-parallel ``cost`` field in the configured display currency, and the top-level
-response includes ``currency`` and ``rate`` so the client can format and label
-numbers without a second round-trip.
-
-The dashboard is served statically at ``/`` from the package's ``web/`` folder.
-"""
+"""FastAPI HTTP + WebSocket server."""
 
 from __future__ import annotations
 
@@ -43,6 +24,23 @@ def _start_of_today_ts() -> float:
     return today.timestamp()
 
 
+def _resolve_window(
+    hours: float | None,
+    days: float | None,
+    since_ts: float | None,
+    until_ts: float | None,
+    default_hours: float = 24,
+) -> tuple[float, float | None]:
+    """Return (since_ts, until_ts) from whichever params were supplied."""
+    if since_ts is not None:
+        return since_ts, until_ts
+    if hours is not None:
+        return time.time() - hours * 3600, until_ts
+    if days is not None:
+        return time.time() - days * 86400, until_ts
+    return time.time() - default_hours * 3600, until_ts
+
+
 def create_app(db: Database, display: DisplayConfig, fx: FxService) -> FastAPI:
     @asynccontextmanager
     async def lifespan(app: FastAPI):
@@ -51,7 +49,6 @@ def create_app(db: Database, display: DisplayConfig, fx: FxService) -> FastAPI:
     app = FastAPI(title="AI Token Dashboard", lifespan=lifespan)
 
     def _enrich(payload: dict) -> dict:
-        """Attach currency/rate to the envelope and inject ``cost`` fields."""
         rate = fx.get_rate(display.currency)
         attach_money(payload, rate)
         return {
@@ -61,8 +58,6 @@ def create_app(db: Database, display: DisplayConfig, fx: FxService) -> FastAPI:
             "rate_as_of": rate.as_of,
             **payload,
         }
-
-    # -------- REST ---------------------------------------------------------
 
     @app.get("/api/stats/today")
     def stats_today():
@@ -74,42 +69,89 @@ def create_app(db: Database, display: DisplayConfig, fx: FxService) -> FastAPI:
         })
 
     @app.get("/api/stats/range")
-    def stats_range(hours: float | None = None, days: float | None = None):
-        if hours is not None:
-            window_s = hours * 3600
-        elif days is not None:
-            window_s = days * 86400
-        else:
-            window_s = 24 * 3600
-        since = time.time() - window_s
+    def stats_range(
+        hours: float | None = None,
+        days: float | None = None,
+        since_ts: float | None = None,
+        until_ts: float | None = None,
+    ):
+        s, u = _resolve_window(hours, days, since_ts, until_ts)
         return _enrich({
-            "since_ts": since,
-            "totals": db.totals_since(since),
-            "by_source": db.by_source_since(since),
+            "since_ts": s,
+            "until_ts": u,
+            "totals": db.totals_since(s, u),
+            "by_source": db.by_source_since(s, u),
         })
 
     @app.get("/api/stats/by_source")
-    def stats_by_source(days: float = 7):
-        since = time.time() - days * 86400
-        return _enrich({"since_ts": since, "rows": db.by_source_since(since)})
+    def stats_by_source(
+        days: float = 7,
+        since_ts: float | None = None,
+        until_ts: float | None = None,
+    ):
+        s, u = _resolve_window(None, days, since_ts, until_ts, default_hours=days * 24)
+        return _enrich({"since_ts": s, "until_ts": u, "rows": db.by_source_since(s, u)})
 
     @app.get("/api/stats/by_model")
-    def stats_by_model(days: float = 7):
-        since = time.time() - days * 86400
-        return _enrich({"since_ts": since, "rows": db.by_model_since(since)})
+    def stats_by_model(
+        days: float = 7,
+        since_ts: float | None = None,
+        until_ts: float | None = None,
+    ):
+        s, u = _resolve_window(None, days, since_ts, until_ts, default_hours=days * 24)
+        return _enrich({"since_ts": s, "until_ts": u, "rows": db.by_model_since(s, u)})
+
+    @app.get("/api/stats/by_project")
+    def stats_by_project(
+        days: float = 7,
+        since_ts: float | None = None,
+        until_ts: float | None = None,
+    ):
+        s, u = _resolve_window(None, days, since_ts, until_ts, default_hours=days * 24)
+        rows = db.by_project_since(s, u)
+        import re, os
+        home_slug = re.sub(r"[^a-zA-Z0-9]", "-", str(Path.home()))
+        def decode_slug(slug: str) -> str:
+            if slug == "unknown":
+                return slug
+            # Strip home dir prefix → ~/remainder
+            if slug.lower().startswith(home_slug.lower()):
+                rest = slug[len(home_slug):].lstrip("-")
+                slug = "~/" + rest
+            else:
+                # Drive letter: X-- → X:/
+                slug = re.sub(r"^([a-zA-Z])--", lambda m: m.group(1).upper() + ":/", slug)
+            # Remaining --  → / then - → /
+            slug = slug.replace("--", "/").replace("-", "/")
+            # Normalize double slashes (except after drive)
+            slug = re.sub(r"(?<!:)//+", "/", slug)
+            return slug
+        for r in rows:
+            r["project_display"] = decode_slug(r["project"])
+        return _enrich({"since_ts": s, "until_ts": u, "rows": rows})
 
     @app.get("/api/stats/series")
-    def stats_series(hours: float = 24, bucket_minutes: int = 15):
-        since = time.time() - hours * 3600
+    def stats_series(
+        hours: float = 24,
+        bucket_minutes: int = 15,
+        since_ts: float | None = None,
+        until_ts: float | None = None,
+    ):
+        s, u = _resolve_window(hours, None, since_ts, until_ts, default_hours=hours)
         return {
-            "since_ts": since,
+            "since_ts": s,
+            "until_ts": u,
             "bucket_seconds": bucket_minutes * 60,
-            "rows": db.buckets_since(since, bucket_minutes * 60),
+            "rows": db.buckets_since(s, bucket_minutes * 60, u),
         }
 
     @app.get("/api/events/recent")
-    def events_recent(limit: int = 100):
-        return _enrich({"events": db.recent(limit=min(limit, 1000))})
+    def events_recent(
+        limit: int = 100,
+        since_ts: float | None = None,
+        until_ts: float | None = None,
+    ):
+        return _enrich({"events": db.recent(limit=min(limit, 1000), since_ts=since_ts, until_ts=until_ts)})
 
     @app.get("/api/suggestions")
     def suggestions(days: float = 7.0):
@@ -126,7 +168,7 @@ def create_app(db: Database, display: DisplayConfig, fx: FxService) -> FastAPI:
             total_savings_usd += s.estimated_monthly_savings_usd
         return _enrich({
             "days": days,
-            "count": len(items),
+            "count": len(payload_items),
             "estimated_monthly_savings_usd": round(total_savings_usd, 2),
             "estimated_monthly_savings": round(total_savings_usd * rate.usd_per_target, 2),
             "items": payload_items,
@@ -142,7 +184,9 @@ def create_app(db: Database, display: DisplayConfig, fx: FxService) -> FastAPI:
             "as_of": rate.as_of,
         }
 
-    # -------- WebSocket ---------------------------------------------------
+    @app.get("/api/meta")
+    def meta():
+        return {"earliest_ts": db.earliest_ts(), "row_count": db.row_count()}
 
     @app.websocket("/ws")
     async def ws(websocket: WebSocket):
@@ -162,8 +206,6 @@ def create_app(db: Database, display: DisplayConfig, fx: FxService) -> FastAPI:
             return
         except Exception:
             await websocket.close()
-
-    # -------- static dashboard -------------------------------------------
 
     web_root = _web_root()
     if web_root and web_root.exists():

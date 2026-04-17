@@ -32,6 +32,7 @@ class TokenEvent:
     cache_write_tokens: int = 0
     cost_usd: float = 0.0
     session_id: str | None = None
+    project: str | None = None  # folder slug, e.g. "D--GitHub-Projects-myapp"
     # Unix seconds; using float so sub-second ordering is preserved.
     timestamp: float = field(default_factory=lambda: time.time())
     # Stable per-event id so we can dedupe on re-reads of append-only JSONL.

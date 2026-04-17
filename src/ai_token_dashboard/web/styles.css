@@ -46,6 +46,39 @@ h2 { font-size: 14px; font-weight: 600; color: var(--muted); text-transform: upp
 .chart-wrap { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; margin: 0 32px; padding: 16px; }
 .chart-wrap canvas { max-height: 280px; }
 
+.date-bar {
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  padding: 12px 32px; border-bottom: 1px solid var(--border);
+  background: var(--panel);
+}
+.presets { display: flex; gap: 6px; }
+.preset {
+  background: transparent; color: var(--muted);
+  border: 1px solid var(--border); border-radius: 6px;
+  padding: 5px 12px; font-size: 12px; cursor: pointer;
+  transition: all 0.15s;
+}
+.preset:hover { color: var(--text); border-color: var(--accent); }
+.preset.active { background: var(--accent); color: #0f1115; border-color: var(--accent); font-weight: 600; }
+
+.custom-range {
+  display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted);
+}
+.custom-range label { display: flex; align-items: center; gap: 4px; }
+.custom-range input[type="date"] {
+  background: var(--bg); color: var(--text);
+  border: 1px solid var(--border); border-radius: 6px;
+  padding: 4px 8px; font-size: 12px;
+  color-scheme: dark;
+}
+#apply-custom {
+  background: var(--accent); color: #0f1115; border: none;
+  border-radius: 6px; padding: 5px 12px; font-size: 12px;
+  font-weight: 600; cursor: pointer;
+}
+#apply-custom:hover { opacity: 0.85; }
+.range-label { color: var(--muted); font-size: 12px; margin-left: auto; }
+
 select {
   background: var(--bg); color: var(--text);
   border: 1px solid var(--border); border-radius: 6px;
@@ -90,6 +123,15 @@ tbody tr:hover { background: rgba(255,255,255,0.02); }
 .sug-save { color: var(--good); font-size: 12px; font-weight: 600; }
 .sug-body { color: var(--muted); font-size: 13px; margin-bottom: 8px; }
 .sug-action { font-size: 13px; }
+.project-path {
+  font-family: "Consolas", "Fira Code", monospace;
+  font-size: 12px;
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--accent);
+}
 .muted { color: var(--muted); padding: 12px 0; }
 .savings-chip {
   background: rgba(158,206,106,0.15); color: var(--good);
