@@ -49,6 +49,24 @@ def _start_loop_in_thread() -> asyncio.AbstractEventLoop:
     return loop
 
 
+def _backfill_projects(cfg: AppConfig, db: Database) -> None:
+    """Build session_id→project map from JSONL paths and patch NULL project rows."""
+    session_map: dict[str, str] = {}
+    cc = cfg.collectors.get("claude_code")
+    if cc and cc.enabled:
+        for root in cc.resolved_paths:
+            if not root.exists():
+                continue
+            for jsonl in root.rglob("*.jsonl"):
+                # jsonl = <root>/<project_slug>/<session_uuid>.jsonl
+                project_slug = jsonl.parent.name
+                session_id = jsonl.stem
+                session_map[session_id] = project_slug
+    updated = db.backfill_projects(session_map)
+    if updated:
+        log.info("backfilled project for %d events", updated)
+
+
 def _start_collectors(
     cfg: AppConfig, db: Database, loop: asyncio.AbstractEventLoop
 ) -> list[JsonlTailCollector]:
@@ -63,7 +81,8 @@ def _start_collectors(
         c = cfg.collectors.get(name)
         if not c or not c.enabled:
             continue
-        coll = cls(paths=c.resolved_paths, db=db, loop=loop)
+        fresh_db = db.row_count() == 0
+        coll = cls(paths=c.resolved_paths, db=db, loop=loop, ingest_existing=fresh_db)
         try:
             coll.start()
             started.append(coll)
@@ -139,6 +158,7 @@ def main() -> int:
     )
 
     loop = _start_loop_in_thread()
+    _backfill_projects(cfg, db)
     watchers = _start_collectors(cfg, db, loop)
     _start_server(cfg, db, fx, loop)
 

@@ -88,6 +88,7 @@ class ClaudeCodeCollector(JsonlTailCollector):
             cache_write_tokens=cache_w,
             cost_usd=cost_for(str(model), input_t, output_t, cache_r, cache_w),
             session_id=session_id,
+            project=path.parent.name,
             timestamp=_ts_of(obj),
             event_id=_stable_id(obj, path),
         )

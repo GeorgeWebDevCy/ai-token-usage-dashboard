@@ -16,21 +16,37 @@
     </div>
   </header>
 
+  <div class="date-bar">
+    <div class="presets">
+      <button class="preset active" data-preset="today">Today</button>
+      <button class="preset" data-preset="7d">7 days</button>
+      <button class="preset" data-preset="30d">30 days</button>
+      <button class="preset" data-preset="all">All time</button>
+      <button class="preset" data-preset="custom">Custom</button>
+    </div>
+    <div class="custom-range" id="custom-range" style="display:none">
+      <label>From <input type="date" id="date-from" /></label>
+      <label>To <input type="date" id="date-to" /></label>
+      <button id="apply-custom">Apply</button>
+    </div>
+    <div class="range-label" id="range-label"></div>
+  </div>
+
   <section class="cards">
     <div class="card">
-      <div class="card-label">Tokens today</div>
+      <div class="card-label">Tokens</div>
       <div class="card-value" id="today-tokens">–</div>
       <div class="card-sub"><span id="today-events">0</span> assistant turns</div>
     </div>
     <div class="card">
-      <div class="card-label">Est. cost today</div>
+      <div class="card-label">Est. cost</div>
       <div class="card-value" id="today-cost">$0.00</div>
       <div class="card-sub">list-price estimate</div>
     </div>
     <div class="card">
-      <div class="card-label">Last 7 days</div>
-      <div class="card-value" id="week-tokens">–</div>
-      <div class="card-sub" id="week-cost">$0.00</div>
+      <div class="card-label">Cache saved</div>
+      <div class="card-value" id="cache-savings">–</div>
+      <div class="card-sub">vs. no caching</div>
     </div>
     <div class="card">
       <div class="card-label">Live events</div>
@@ -52,12 +68,6 @@
   <section class="chart-wrap">
     <div class="section-header">
       <h2>Tokens over time</h2>
-      <select id="range-select">
-        <option value="2">Last 2h</option>
-        <option value="24" selected>Last 24h</option>
-        <option value="168">Last 7d</option>
-        <option value="720">Last 30d</option>
-      </select>
     </div>
     <canvas id="series-chart"></canvas>
   </section>
@@ -77,6 +87,14 @@
         <tbody></tbody>
       </table>
     </div>
+  </section>
+
+  <section>
+    <h2>By project / folder</h2>
+    <table id="by-project-table">
+      <thead><tr><th>Project</th><th>Source</th><th>Tokens</th><th>Cost</th><th>Turns</th></tr></thead>
+      <tbody></tbody>
+    </table>
   </section>
 
   <section>

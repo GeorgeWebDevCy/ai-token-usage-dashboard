@@ -93,6 +93,7 @@ class CodexCollector(JsonlTailCollector):
             output_tokens=output_t,
             cost_usd=cost_for(model, input_t, output_t),
             session_id=obj.get("session_id") or obj.get("conversation_id"),
+            project=path.parent.name,
             timestamp=_ts_of(obj),
             event_id=_stable_id(obj, path, line),
         )
