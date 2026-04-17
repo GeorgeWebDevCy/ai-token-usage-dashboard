@@ -441,4 +441,4 @@ async function refreshAll() {
 applyPreset("today");
 refreshAll().catch(console.error);
 connectWS();
-setInterval(() => refreshAll().catch(console.warn), 30_000);
+setInterval(() => refreshAll().catch(console.warn), 1_000);
