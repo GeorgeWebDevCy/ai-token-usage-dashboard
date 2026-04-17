@@ -29,6 +29,12 @@ header h1 { margin: 0; font-size: 18px; font-weight: 600; letter-spacing: .2px; 
 .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--bad); }
 .dot.connected { background: var(--good); box-shadow: 0 0 8px var(--good); }
 .dot.disconnected { background: var(--bad); }
+.sync-btn { background: none; border: 1px solid var(--border); color: var(--muted); font-size: 11px; padding: 2px 8px; border-radius: 4px; cursor: pointer; }
+.sync-btn:hover { border-color: var(--accent); color: var(--accent); }
+.sync-btn:disabled { opacity: 0.5; cursor: default; }
+.sync-status { font-size: 11px; }
+.sync-ok { color: var(--good); }
+.sync-err { color: var(--bad); }
 
 section { padding: 20px 32px; }
 .section-header { display: flex; justify-content: space-between; align-items: baseline; }

@@ -42,7 +42,7 @@ def _resolve_window(
     return time.time() - default_hours * 3600, until_ts
 
 
-def create_app(db: Database, display: DisplayConfig, fx: FxService) -> FastAPI:
+def create_app(db: Database, display: DisplayConfig, fx: FxService, cfg=None) -> FastAPI:
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         yield
@@ -224,6 +224,45 @@ def create_app(db: Database, display: DisplayConfig, fx: FxService) -> FastAPI:
     @app.get("/api/meta")
     def meta():
         return {"earliest_ts": db.earliest_ts(), "row_count": db.row_count()}
+
+    @app.post("/api/backfill")
+    async def backfill():
+        """Re-scan all configured JSONL paths and ingest missing events."""
+        import asyncio
+        from concurrent.futures import ThreadPoolExecutor
+        from .collectors.claude_code import ClaudeCodeCollector
+        from .collectors.codex import CodexCollector
+        from .collectors.gemini import GeminiCollector
+
+        def _run():
+            before = db.row_count()
+            mapping = {
+                "claude_code": ClaudeCodeCollector,
+                "codex":       CodexCollector,
+                "gemini":      GeminiCollector,
+            }
+            inner_loop = asyncio.new_event_loop()
+            for name, cls in mapping.items():
+                if cfg is None:
+                    break
+                c = cfg.collectors.get(name)
+                if not c or not c.enabled:
+                    continue
+                paths = [p for p in c.resolved_paths if p.exists()]
+                if not paths:
+                    continue
+                coll = cls(paths=paths, db=db, loop=inner_loop, ingest_existing=True)
+                for root in paths:
+                    for jsonl in root.rglob("*.jsonl"):
+                        coll._drain(jsonl)  # noqa: SLF001
+            inner_loop.close()
+            after = db.row_count()
+            return {"inserted": after - before, "total": after}
+
+        loop = asyncio.get_event_loop()
+        with ThreadPoolExecutor(max_workers=1) as pool:
+            result = await loop.run_in_executor(pool, _run)
+        return result
 
     @app.websocket("/ws")
     async def ws(websocket: WebSocket):

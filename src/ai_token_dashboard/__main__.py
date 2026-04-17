@@ -118,7 +118,7 @@ def _start_server(
 ) -> None:
     import uvicorn
 
-    app = create_app(db, cfg.display, fx)
+    app = create_app(db, cfg.display, fx, cfg)
     config = uvicorn.Config(
         app, host=cfg.server.host, port=cfg.server.port,
         log_level="warning", access_log=False, loop="asyncio",
