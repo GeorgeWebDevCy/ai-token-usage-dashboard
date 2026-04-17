@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ai-token-dashboard"
+version = "0.1.0"
+description = "Real-time, local, cross-platform dashboard for token usage across Claude, Codex, Gemini and other AI CLIs."
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{ name = "George" }]
+license = { text = "MIT" }
+dependencies = [
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.27",
+    "watchdog>=4.0",
+    "pystray>=0.19.5",
+    "Pillow>=10.0",
+    "httpx>=0.27",
+    "PyYAML>=6.0",
+    "websockets>=12.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+    "httpx>=0.27",
+]
+
+[project.scripts]
+ai-token-dashboard = "ai_token_dashboard.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+ai_token_dashboard = ["web/*.html", "web/*.js", "web/*.css"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"

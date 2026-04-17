@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>AI Token Dashboard</title>
+  <link rel="stylesheet" href="/web/styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <header>
+    <h1>AI Token Dashboard</h1>
+    <div class="status">
+      <span id="ws-dot" class="dot disconnected" title="WebSocket status"></span>
+      <span id="ws-label">connecting…</span>
+    </div>
+  </header>
+
+  <section class="cards">
+    <div class="card">
+      <div class="card-label">Tokens today</div>
+      <div class="card-value" id="today-tokens">–</div>
+      <div class="card-sub"><span id="today-events">0</span> assistant turns</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Est. cost today</div>
+      <div class="card-value" id="today-cost">$0.00</div>
+      <div class="card-sub">list-price estimate</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Last 7 days</div>
+      <div class="card-value" id="week-tokens">–</div>
+      <div class="card-sub" id="week-cost">$0.00</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Live events</div>
+      <div class="card-value" id="live-count">0</div>
+      <div class="card-sub">since page loaded</div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-header">
+      <h2>Savings suggestions</h2>
+      <span id="savings-estimate" class="savings-chip">–</span>
+    </div>
+    <div id="suggestions" class="suggestions">
+      <div class="muted">Analyzing recent usage…</div>
+    </div>
+  </section>
+
+  <section class="chart-wrap">
+    <div class="section-header">
+      <h2>Tokens over time</h2>
+      <select id="range-select">
+        <option value="2">Last 2h</option>
+        <option value="24" selected>Last 24h</option>
+        <option value="168">Last 7d</option>
+        <option value="720">Last 30d</option>
+      </select>
+    </div>
+    <canvas id="series-chart"></canvas>
+  </section>
+
+  <section class="grid-2">
+    <div>
+      <h2>By source</h2>
+      <table id="by-source-table">
+        <thead><tr><th>Source</th><th>Tokens</th><th>Cost</th><th>Turns</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div>
+      <h2>By model</h2>
+      <table id="by-model-table">
+        <thead><tr><th>Model</th><th>Input</th><th>Output</th><th>Cache</th><th>Cost</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Recent turns</h2>
+    <table id="recent-table">
+      <thead><tr><th>Time</th><th>Source</th><th>Model</th><th>Input</th><th>Output</th><th>Cost</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+  <script src="/web/app.js"></script>
+</body>
+</html>
