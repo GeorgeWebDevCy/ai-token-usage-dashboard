@@ -8,7 +8,22 @@
       "Bash(rtk gh *)",
       "Bash(rtk ls *)",
       "Bash(curl -s *)",
-      "Bash(netstat -ano)"
+      "Bash(netstat -ano)",
+      "Bash(rtk init *)",
+      "Bash(rtk --help)",
+      "Bash(rtk hook *)",
+      "Bash(RTK_NO_WARN=1 rtk git status)",
+      "Bash(RTK_SILENT=1 rtk git status)",
+      "Bash(RTK_QUIET=1 rtk git status)",
+      "Bash(RTK_INSTALLED=1 rtk git status)",
+      "Bash(RTK_HOOK_OK=1 rtk git status)",
+      "Bash(NO_RTK_WARN=1 rtk git status)",
+      "Bash(powershell -ExecutionPolicy Bypass -File \"C:\\\\Users\\\\georg\\\\.claude\\\\hooks\\\\rtk-pretooluse.ps1\")",
+      "Bash(chmod +x ~/bin/rtk)"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\georg\\.claude",
+      "C:\\Users\\georg"
     ]
   }
 }
