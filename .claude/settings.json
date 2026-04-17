@@ -19,7 +19,13 @@
       "Bash(RTK_HOOK_OK=1 rtk git status)",
       "Bash(NO_RTK_WARN=1 rtk git status)",
       "Bash(powershell -ExecutionPolicy Bypass -File \"C:\\\\Users\\\\georg\\\\.claude\\\\hooks\\\\rtk-pretooluse.ps1\")",
-      "Bash(chmod +x ~/bin/rtk)"
+      "Bash(chmod +x ~/bin/rtk)",
+      "Bash(python -m ai_token_dashboard --help)",
+      "Bash(python -c \"import sys; print\\(sys.executable\\)\")",
+      "Bash(powershell -Command ' *)",
+      "Bash(cmd.exe /c \"schtasks /Create /TN \\\\\"AI Token Dashboard\\\\\" /TR \\\\\"wscript.exe 'C:\\\\\\\\Users\\\\\\\\georg\\\\\\\\bin\\\\\\\\start-ai-dashboard.vbs'\\\\\" /SC ONLOGON /DELAY 0:30 /F\")",
+      "Bash(powershell.exe -Command \"schtasks /Create /TN 'AI Token Dashboard' /TR 'wscript.exe \\\\\"C:\\\\\\\\Users\\\\\\\\georg\\\\\\\\bin\\\\\\\\start-ai-dashboard.vbs\\\\\"' /SC ONLOGON /DELAY 0:30 /RL HIGHEST /F\")",
+      "Bash(git push *)"
     ],
     "additionalDirectories": [
       "C:\\Users\\georg\\.claude",
