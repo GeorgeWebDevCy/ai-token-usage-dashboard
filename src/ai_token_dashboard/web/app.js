@@ -1,9 +1,9 @@
 // Dashboard logic
 
 const fmt = n => (n ?? 0).toLocaleString();
-const fmtDate = ts => new Date(ts * 1000).toLocaleDateString();
-const fmtTime = ts => new Date(ts * 1000).toLocaleTimeString();
-const fmtDateTime = ts => new Date(ts * 1000).toLocaleString();
+const fmtDate = ts => new Date(ts * 1000).toLocaleDateString('en-GB');
+const fmtTime = ts => new Date(ts * 1000).toLocaleTimeString('en-GB');
+const fmtDateTime = ts => new Date(ts * 1000).toLocaleString('en-GB');
 
 function esc(s) {
   return String(s ?? "")
@@ -362,10 +362,10 @@ async function refreshChart() {
   }));
 
   const labelFn = bucketMin >= 1440
-    ? b => new Date(b * 1000).toLocaleDateString([], {month:"short", day:"numeric"})
+    ? b => new Date(b * 1000).toLocaleDateString('en-GB', {day:"2-digit", month:"short"})
     : bucketMin >= 120
-      ? b => new Date(b * 1000).toLocaleString([], {month:"short", day:"numeric", hour:"2-digit"})
-      : b => new Date(b * 1000).toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"});
+      ? b => new Date(b * 1000).toLocaleString('en-GB', {day:"2-digit", month:"short", hour:"2-digit"})
+      : b => new Date(b * 1000).toLocaleTimeString('en-GB', {hour:"2-digit", minute:"2-digit"});
 
   const labels = buckets.map(labelFn);
 
@@ -470,6 +470,35 @@ async function refreshAll() {
     refreshByProject(), refreshRecent(), refreshChart(), refreshSuggestions(),
   ]);
 }
+
+// ── Backfill ──────────────────────────────────────────────────────────────────
+
+async function triggerBackfill() {
+  const btn = document.getElementById("backfill-btn");
+  const status = document.getElementById("backfill-status");
+  btn.disabled = true;
+  btn.textContent = "Syncing…";
+  status.textContent = "";
+  status.className = "sync-status";
+  try {
+    const r = await fetch("/api/backfill", { method: "POST" });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const d = await r.json();
+    status.textContent = d.inserted > 0
+      ? `+${d.inserted} events (${d.total} total)`
+      : `Up to date (${d.total} events)`;
+    status.className = "sync-status sync-ok";
+    await refreshAll();
+  } catch (e) {
+    status.textContent = `Failed: ${e.message}`;
+    status.className = "sync-status sync-err";
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Sync data";
+  }
+}
+
+document.getElementById("backfill-btn").addEventListener("click", triggerBackfill);
 
 applyPreset("today");
 refreshAll().catch(console.error);
