@@ -166,6 +166,23 @@ class Database:
             ).fetchall()
             return [dict(r) for r in rows]
 
+    def cache_savings_by_model(self, since_ts: float, until_ts: float | None = None) -> list[dict]:
+        """Per-model cache_read totals for savings computation."""
+        clause, params = self._ts_clause(since_ts, until_ts)
+        with self._conn() as c:
+            rows = c.execute(
+                f"""
+                SELECT model,
+                       SUM(cache_read_tokens) AS cache_read_tokens,
+                       SUM(cache_write_tokens) AS cache_write_tokens,
+                       SUM(input_tokens) AS input_tokens
+                FROM events WHERE {clause} AND cache_read_tokens > 0
+                GROUP BY model
+                """,
+                params,
+            ).fetchall()
+            return [dict(r) for r in rows]
+
     def by_project_since(self, since_ts: float, until_ts: float | None = None) -> list[dict]:
         clause, params = self._ts_clause(since_ts, until_ts)
         with self._conn() as c:

@@ -47,6 +47,15 @@ def cost_for(
     return round(total, 6)
 
 
+def cache_savings_for(model: str, cache_read_tokens: int) -> float:
+    """Estimated USD saved by caching vs. billing cache_read at full input rate."""
+    p = _resolve(model)
+    if not p or "cache_read" not in p:
+        return 0.0
+    diff = p["input"] - p["cache_read"]  # savings per 1M tokens
+    return round(cache_read_tokens * diff / 1_000_000, 6)
+
+
 def _resolve(model: str) -> dict[str, float] | None:
     """Match a specific model id or a prefix (e.g. 'claude-sonnet-4-6-20260101')."""
     if model in PRICES:

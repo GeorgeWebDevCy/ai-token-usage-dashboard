@@ -123,6 +123,19 @@ tbody tr:hover { background: rgba(255,255,255,0.02); }
 .sug-save { color: var(--good); font-size: 12px; font-weight: 600; }
 .sug-body { color: var(--muted); font-size: 13px; margin-bottom: 8px; }
 .sug-action { font-size: 13px; }
+.card-good .card-value { color: var(--good); }
+
+.savings-section { padding: 20px 32px; }
+.savings-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 4px;
+}
+.savings-stat {
+  background: var(--panel); border: 1px solid rgba(158,206,106,0.2);
+  border-radius: 8px; padding: 12px 16px;
+}
+.savings-label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .8px; }
+.savings-val { font-size: 22px; font-weight: 600; color: var(--good); margin-top: 4px; font-variant-numeric: tabular-nums; }
+
 .project-path {
   font-family: "Consolas", "Fira Code", monospace;
   font-size: 12px;

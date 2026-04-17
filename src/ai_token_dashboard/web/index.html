@@ -43,10 +43,10 @@
       <div class="card-value" id="today-cost">$0.00</div>
       <div class="card-sub">list-price estimate</div>
     </div>
-    <div class="card">
-      <div class="card-label">Cache saved</div>
+    <div class="card card-good">
+      <div class="card-label">Saved by caching</div>
       <div class="card-value" id="cache-savings">–</div>
-      <div class="card-sub">vs. no caching</div>
+      <div class="card-sub" id="cache-hit-pct">vs. full input pricing</div>
     </div>
     <div class="card">
       <div class="card-label">Live events</div>
@@ -63,6 +63,31 @@
     <div id="suggestions" class="suggestions">
       <div class="muted">Analyzing recent usage…</div>
     </div>
+  </section>
+
+  <section class="savings-section">
+    <div class="section-header">
+      <h2>Cache savings breakdown</h2>
+      <span id="savings-total-chip" class="savings-chip">–</span>
+    </div>
+    <div class="savings-grid">
+      <div class="savings-stat">
+        <div class="savings-label">Saved vs. no cache</div>
+        <div class="savings-val" id="sv-saved">–</div>
+      </div>
+      <div class="savings-stat">
+        <div class="savings-label">Cache hit rate</div>
+        <div class="savings-val" id="sv-hit-pct">–</div>
+      </div>
+      <div class="savings-stat">
+        <div class="savings-label">Cache read tokens</div>
+        <div class="savings-val" id="sv-cache-tokens">–</div>
+      </div>
+    </div>
+    <table id="savings-model-table" style="margin-top:12px">
+      <thead><tr><th>Model</th><th>Cache read tokens</th><th>Saved</th></tr></thead>
+      <tbody></tbody>
+    </table>
   </section>
 
   <section class="chart-wrap">

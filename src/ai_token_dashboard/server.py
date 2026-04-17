@@ -16,6 +16,7 @@ from .config import DisplayConfig
 from .db import Database
 from .events import BUS
 from .fx import FxService, attach_money
+from .pricing import cache_savings_for
 
 
 def _start_of_today_ts() -> float:
@@ -182,6 +183,42 @@ def create_app(db: Database, display: DisplayConfig, fx: FxService) -> FastAPI:
             "rate": rate.usd_per_target,
             "source": rate.source,
             "as_of": rate.as_of,
+        }
+
+    @app.get("/api/stats/savings")
+    def stats_savings(
+        days: float = 7,
+        since_ts: float | None = None,
+        until_ts: float | None = None,
+    ):
+        s, u = _resolve_window(None, days, since_ts, until_ts, default_hours=days * 24)
+        rows = db.cache_savings_by_model(s, u)
+        rate = fx.get_rate(display.currency)
+        total_saved_usd = sum(
+            cache_savings_for(r["model"], r["cache_read_tokens"]) for r in rows
+        )
+        total_cache_read = sum(r["cache_read_tokens"] for r in rows)
+        total_input = sum(r["input_tokens"] for r in rows)
+        model_breakdown = [
+            {
+                "model": r["model"],
+                "cache_read_tokens": r["cache_read_tokens"],
+                "saved_usd": round(cache_savings_for(r["model"], r["cache_read_tokens"]), 4),
+                "saved": round(cache_savings_for(r["model"], r["cache_read_tokens"]) * rate.usd_per_target, 4),
+            }
+            for r in rows
+        ]
+        return {
+            "currency": display.currency,
+            "rate": rate.usd_per_target,
+            "since_ts": s,
+            "until_ts": u,
+            "total_saved_usd": round(total_saved_usd, 4),
+            "total_saved": round(total_saved_usd * rate.usd_per_target, 4),
+            "total_cache_read_tokens": total_cache_read,
+            "total_input_tokens": total_input,
+            "cache_hit_pct": round(total_cache_read / (total_input + total_cache_read) * 100, 1) if (total_input + total_cache_read) > 0 else 0,
+            "by_model": model_breakdown,
         }
 
     @app.get("/api/meta")

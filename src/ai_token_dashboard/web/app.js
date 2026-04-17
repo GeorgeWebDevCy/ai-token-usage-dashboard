@@ -109,11 +109,17 @@ function rangeParams() {
 // ── DOM refs ──────────────────────────────────────────────────────────────────
 
 const els = {
-  todayTokens:  document.getElementById("today-tokens"),
-  todayEvents:  document.getElementById("today-events"),
-  todayCost:    document.getElementById("today-cost"),
-  cacheSavings: document.getElementById("cache-savings"),
-  liveCount:    document.getElementById("live-count"),
+  todayTokens:    document.getElementById("today-tokens"),
+  todayEvents:    document.getElementById("today-events"),
+  todayCost:      document.getElementById("today-cost"),
+  cacheSavings:   document.getElementById("cache-savings"),
+  cacheHitPct:    document.getElementById("cache-hit-pct"),
+  liveCount:      document.getElementById("live-count"),
+  svSaved:        document.getElementById("sv-saved"),
+  svHitPct:       document.getElementById("sv-hit-pct"),
+  svCacheTokens:  document.getElementById("sv-cache-tokens"),
+  savingsTotalChip: document.getElementById("savings-total-chip"),
+  savingsModelTbody: document.querySelector("#savings-model-table tbody"),
   wsDot:        document.getElementById("ws-dot"),
   wsLabel:      document.getElementById("ws-label"),
   bySource:     document.querySelector("#by-source-table tbody"),
@@ -149,11 +155,7 @@ async function refreshCards() {
   els.todayEvents.textContent = fmt(t.event_count);
   els.todayCost.textContent   = fmtCost(costOf(t));
 
-  const totalIn = (t.input_tokens||0) + (t.cache_read_tokens||0) + (t.cache_write_tokens||0);
-  const cacheHit = t.cache_read_tokens || 0;
-  els.cacheSavings.textContent = (totalIn > 0 && cacheHit > 0)
-    ? `${((cacheHit / totalIn) * 100).toFixed(1)}% cache hit`
-    : "–";
+  // cache savings card updated by refreshSavings()
 }
 
 async function refreshBySource() {
@@ -236,6 +238,37 @@ async function refreshRecent() {
     frag.appendChild(tr);
   });
   els.recent.replaceChildren(frag);
+}
+
+async function refreshSavings() {
+  const r = await fetchJSON(`/api/stats/savings?${rangeParams()}`);
+  const saved = r.total_saved ?? (r.total_saved_usd * DISPLAY_RATE);
+  // Update card
+  els.cacheSavings.textContent = fmtCost(saved);
+  els.cacheHitPct.textContent = `${r.cache_hit_pct ?? 0}% cache hit`;
+  // Update section
+  if (els.savingsTotalChip) els.savingsTotalChip.textContent = `${fmtCost(saved)} saved`;
+  if (els.svSaved) els.svSaved.textContent = fmtCost(saved);
+  if (els.svHitPct) els.svHitPct.textContent = `${r.cache_hit_pct ?? 0}%`;
+  if (els.svCacheTokens) els.svCacheTokens.textContent = fmt(r.total_cache_read_tokens);
+  if (els.savingsModelTbody) {
+    const rows = r.by_model ?? [];
+    if (!rows.length) {
+      els.savingsModelTbody.innerHTML = `<tr><td colspan="3" class="muted">No cache data for selected range</td></tr>`;
+      return;
+    }
+    const frag = document.createDocumentFragment();
+    rows.sort((a, b) => (b.saved_usd ?? 0) - (a.saved_usd ?? 0)).forEach(row => {
+      const tr = document.createElement("tr");
+      [row.model, fmt(row.cache_read_tokens), fmtCost(row.saved ?? row.saved_usd)].forEach(v => {
+        const td = document.createElement("td");
+        td.textContent = v;
+        tr.appendChild(td);
+      });
+      frag.appendChild(tr);
+    });
+    els.savingsModelTbody.replaceChildren(frag);
+  }
 }
 
 async function refreshByProject() {
@@ -433,7 +466,7 @@ function onLiveEvent(ev) {
 
 async function refreshAll() {
   await Promise.all([
-    refreshCards(), refreshBySource(), refreshByModel(),
+    refreshCards(), refreshSavings(), refreshBySource(), refreshByModel(),
     refreshByProject(), refreshRecent(), refreshChart(), refreshSuggestions(),
   ]);
 }
